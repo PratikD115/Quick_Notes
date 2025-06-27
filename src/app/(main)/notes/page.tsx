@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import ClickOutside from "@/components/ClickOutside";
 
@@ -12,22 +12,20 @@ type Note = {
 };
 
 export default function Notes() {
-  const count = useRef(0);
   const [notes, setNotes] = useState<Note[]>([]);
   const [note, setNote] = useState<string>("");
   const [editId, setEditId] = useState<number | undefined>();
   const [editNote, setEditNote] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const res = await fetch('/api/notes');
+        const res = await fetch("/api/notes");
         const data = await res.json();
         setNotes(data);
       } catch (error) {
-        console.error('Failed to fetch notes:', error);
+        console.error("Failed to fetch notes:", error);
       } finally {
         setLoading(false);
       }
@@ -36,38 +34,69 @@ export default function Notes() {
     fetchNotes();
   }, []);
 
-
-  const handleClick = () => {
+  const handleClick = async () => {
     if (note.trim() === "") return;
-    const newNote: Note = {
-      id: count.current++,
-      content: note.trim(),
-      createdAt: new Date(),
-      isEdited: false,
-    };
-    setNotes([...notes, newNote]);
+
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        body: JSON.stringify({ content: note.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const newNote = await res.json();
+      console.log("newNote", newNote);
+
+      setNotes((prev) => [newNote, ...prev]);
+    } catch (err) {
+      console.error("Failed to create note:", err);
+    }
     setNote("");
   };
 
-  const handleEditNote = (id: number) => {
+  const handleEditNote = async (id: number) => {
     if (editNote.trim() === "") {
       handleDelete(id);
     } else {
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === id ? { ...note, content: editNote, isEdited: true } : note
-        )
-      );
+      try {
+        const res = await fetch(`/api/notes/${id}`, {
+          method: "PUT",
+          body: JSON.stringify({ content: editNote }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const updatedNote = await res.json();
+
+        setNotes((prevNotes) =>
+          prevNotes.map((note) => (note.id === id ? updatedNote : note))
+        );
+      } catch (err) {
+        console.error("Failed to update note:", err);
+      }
       setEditId(undefined);
       setEditNote("");
     }
   };
 
-  const handleDelete = (id: number) => {
-    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/notes/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete note");
+      }
+      setNotes((prev) => prev.filter((note) => note.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEdit = (id: number) => {
+  const handleEditModeOpen = (id: number) => {
     setEditId(id);
     setEditNote(notes.find((note) => note.id === id)?.content || "");
   };
@@ -95,10 +124,11 @@ export default function Notes() {
           className=" text-gray-600 w-full p-4 rounded-md bg-blue-50 border border-blue-100 focus:outline-none focus:ring focus:ring-blue-200 mb-4"
           rows={4}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleClick();
-            }}}
+            }
+          }}
         ></textarea>
         <button
           onClick={handleClick}
@@ -114,19 +144,17 @@ export default function Notes() {
           No notes yet. Add your first one above !
         </p>
       )}
-      {loading && <p className="text-gray-500 text-center mt-16">Loading...</p> }
-      {notes.map((note) =>
+      {loading && <p className="text-gray-500 text-center mt-16">Loading...</p>}
+      {notes?.map((note: Note) =>
         note.id !== editId ? (
           <div
             key={note.id}
-            onDoubleClick={() => handleEdit(note.id)}
+            onDoubleClick={() => handleEditModeOpen(note.id)}
             className="bg-white shadow-xl min-h-32 px-8 rounded-lg p-3 w-full max-w-xl mt-2 flex flex-col justify-between"
           >
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs text-gray-400 mt-2 ">
-                <code className="mr-2">
-                  Id: {note.id + 1}
-                </code>
+                <code className="mr-2">Id: {note.id + 1}</code>
                 <code>{note.isEdited ? "Edited" : ""}</code>
               </span>
 
@@ -158,10 +186,11 @@ export default function Notes() {
                 className=" text-gray-600 w-full p-4 rounded-md bg-blue-50 border border-blue-100 focus:outline-none focus:ring focus:ring-blue-200 mb-4"
                 rows={4}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    handleEditNote(note.id)
-                  }}}
+                    handleEditNote(note.id);
+                  }
+                }}
               ></textarea>
               <button
                 onClick={() => handleEditNote(note.id)}

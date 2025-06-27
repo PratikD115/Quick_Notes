@@ -11,3 +11,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch notes' }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+    const body = await req.json();
+
+    const newNote = await prisma.note.create({
+      data: {
+        content: body.content,
+        isEdited: false,
+      },
+    });
+  
+    return NextResponse.json(newNote);
+}
