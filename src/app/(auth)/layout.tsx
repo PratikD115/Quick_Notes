@@ -1,3 +1,4 @@
+import AuthNavbar from "@/components/AuthNavbar";
 import "./../globals.css";
 
 export default function LoginLayout({
@@ -7,7 +8,12 @@ export default function LoginLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <div>
+          <AuthNavbar />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }
