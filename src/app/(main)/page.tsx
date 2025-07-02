@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div
       onClick={handleClick}
-      className="flex justify-center items-center text-9xl text-blue-400 font-serif h-96 cursor-pointer"
+      className="flex justify-center items-center text-9xl text-primary font-serif h-96 cursor-pointer"
     >
       Notes
     </div>

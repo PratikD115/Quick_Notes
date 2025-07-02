@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import ClickOutside from "@/components/ClickOutside";
+import ArticleIcon from '@mui/icons-material/Article';
+import AddIcon from '@mui/icons-material/Add';
+import { Button } from "@/components/ui/button"
+import { AlertBox } from "@/components/AlertBox";
 
 type Note = {
   id: number;
@@ -105,8 +109,8 @@ export default function Notes() {
     <div className="min-h-screen bg-blue-50 flex flex-col items-center px-4 py-10">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-blue-400 flex items-center justify-center gap-2">
-          📄 <span>Quick Notes</span>
+        <h1 className="text-4xl font-bold text-primary flex items-center justify-center gap-2">
+          <ArticleIcon sx={{ fontSize: 40 }} /> <span>Quick Notes</span>
         </h1>
         <p className="text-gray-600 mt-2">
           Your simple space for capturing thoughts.
@@ -132,9 +136,9 @@ export default function Notes() {
         ></textarea>
         <button
           onClick={handleClick}
-          className="w-full bg-blue-400 hover:bg-blue-500 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 shadow"
+          className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-md flex items-center justify-center gap-2 shadow"
         >
-          <span className="text-2xl">+</span> Add Note
+          <AddIcon sx={{ fontSize: 20 }} /> Add Note
         </button>
       </div>
 
@@ -157,14 +161,17 @@ export default function Notes() {
                 <code className="mr-2">Id: {note.id + 1}</code>
                 <code>{note.isEdited ? "Edited" : ""}</code>
               </span>
+              <AlertBox
+                onDelete={() => handleDelete(note.id)}
+                alertTitle="Delete Note"
+                alertDescription="Do you really want to delete this note?"
+              >
+                <Button variant='ghost' size='icon'>
+                  <ClearIcon sx={{ fontSize: 24 }} className="cursor-pointer text-primary"
+                  />
+                </Button>
+              </AlertBox>
 
-              <span>
-                <ClearIcon
-                  onClick={() => handleDelete(note.id)}
-                  sx={{ fontSize: 24 }}
-                  className="cursor-pointer text-red-400 hover:text-red-500"
-                />
-              </span>
             </div>
             <div className="text-gray-600 text-l whitespace-pre-wrap break-words">
               {note.content}
@@ -192,16 +199,16 @@ export default function Notes() {
                   }
                 }}
               ></textarea>
-              <button
-                onClick={() => handleEditNote(note.id)}
-                className="w-full bg-blue-400 hover:bg-blue-500 text-white py-2 px-4 rounded-md flex items-center justify-center gap-2 shadow"
-              >
-                Edit Note
-              </button>
+              <div className="flex justify-end items-end">
+                <Button className="w-32" onClick={() => handleEditNote(note.id)}              >
+                  Edit Note
+                </Button></div>
+
             </div>
           </ClickOutside>
         )
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
