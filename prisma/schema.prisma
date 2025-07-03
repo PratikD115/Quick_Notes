@@ -14,17 +14,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model Note {
-  id          Int       @id @default(autoincrement())
-  content     String
-  createdAt   DateTime  @default(now())
-  isEdited    Boolean   @default(false)
-}
-
 model User {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(cuid())
   name        String    
   email       String    @unique
   password    String
+  notes       Note[]
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  content     String
+  createdAt   DateTime  @default(now())
+  isEdited    Boolean   @default(false)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id]) 
 }
