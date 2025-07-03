@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import GoogleIcon from '@mui/icons-material/Google';
+import { signIn } from "next-auth/react"
 
 const LoginForm = ({
   className,
@@ -52,7 +53,7 @@ const LoginForm = ({
                 </span>
               </div>
               <div className="flex justify-center items-center">
-                <Button variant="outline" type="button" className="w-full">
+                <Button onClick={() => signIn('google', { callbackUrl: '/' })} variant="outline" type="button" className="w-full">
                   <GoogleIcon />
                   <span className="sr-only">Login with Google</span>
                 </Button>
