@@ -19,7 +19,8 @@ const HomeNavbar = () => {
 
       {/* Right Section - Auth Buttons */}
       <div className="flex space-x-4">
-        <Button size={'lg'} className="cursor-pointer" onClick={() => router.push('./auth')}>LogIn</Button>
+        <Button variant={"outline"} className="cursor-pointer border-[1.5px] hover:border-cyan-900" onClick={() => router.push('./login')}>LogIn</Button>
+        <Button className="cursor-pointer" onClick={() => router.push('./signup')}>SignUp</Button>
       </div>
     </nav>
   );

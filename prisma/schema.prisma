@@ -14,11 +14,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AuthProvider {
+  GOOGLE
+  CREDENTIALS
+}
+
 model User {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String    
-  email       String    @unique
+  email       String        @unique
   password    String
+  authSource  AuthProvider  @default(CREDENTIALS)
   notes       Note[]
 }
 
