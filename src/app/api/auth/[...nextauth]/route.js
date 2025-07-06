@@ -1,10 +1,15 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import prisma from './../../../../../prisma';
-import { hash, compare } from "bcryptjs";
+import prisma from "./../../../../../lib/prisma";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { compare } from "bcryptjs";
 
 export const authOptions = {
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -18,6 +23,9 @@ export const authOptions = {
       },
       async authorize(credentials) {
         console.log("Credentials received:", credentials);
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
         const { email, password } = credentials;
 
         const existingUser = await prisma.user.findUnique({
@@ -25,41 +33,22 @@ export const authOptions = {
         });
 
         if (existingUser) {
+          console.log("we found the existing user", existingUser);
           const isValid = await compare(password, existingUser.password);
-          if (!isValid) return null;
+          if (!isValid) {
+            console.log("password not matched and returning null");
+            return null;
+          }
           return { id: existingUser.id, email: existingUser.email };
         } else {
-          // No user? Auto-register them
-          const hashedPassword = await hash(password, 10);
-          const newUser = await prisma.user.create({
-            data: {
-              email,
-              password: hashedPassword,
-            },
-          });
-          return { id: newUser.id, email: newUser.email };
+          console.log('we not foudn the user')
+          throw new Error("No user found with this email");
         }
       },
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      console.log("User signing in:", user);
-      return true;
-    },
-    async jwt({ token, user }) {
-      // Called when the JWT token is created or updated
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-        token.picture = user.image;
-        console.log("JWT token created:", token);
-      }
-      return token;
-    },
     async session({ session, token }) {
-      // Called when the session is accessed in client components
       session.user.id = token.id;
       console.log("Session data:", session);
       return session;
@@ -67,5 +56,5 @@ export const authOptions = {
   },
 };
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
