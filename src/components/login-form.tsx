@@ -7,9 +7,54 @@ import Image from "next/image";
 import GoogleIcon from "@mui/icons-material/Google";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z
+    .string({
+      required_error: "Email is required",
+    })
+    .min(1, "Email is required")
+    .email("Invalid email address"),
+  password: z
+    .string({
+      required_error: "Password is required",
+    })
+    .min(8, "password must be at least 8 characters long"),
+});
+
+type TLoginData = z.infer<typeof loginSchema>;
 
 const LoginForm = ({ className, ...props }: React.ComponentProps<"div">) => {
   const router = useRouter();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TLoginData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+  });
+
+  const onSubmit = async (data: TLoginData) => {
+    console.log("login refined data:", data);
+    const res = await signIn("credentials", {
+      redirect: false,
+      email: data.email,
+      password: data.password,
+      callbackUrl: "/",
+    });
+
+    if (res?.error) {
+      console.error("Login failed:", res.error);
+    } else if (res?.ok) {
+      console.log("Login successful");
+      router.push(res.url || "/");
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -24,12 +69,25 @@ const LoginForm = ({ className, ...props }: React.ComponentProps<"div">) => {
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="m@example.com"
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  )}
                 />
+                {errors.email && (
+                  <div className="text-xs text-red-500 ml-1">
+                    {errors.email.message}
+                  </div>
+                )}
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
@@ -44,9 +102,26 @@ const LoginForm = ({ className, ...props }: React.ComponentProps<"div">) => {
                     Forgot your password?
                   </button>
                 </div>
-                <Input id="password" type="password" required />
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="password"
+                      type="password"
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
+                {errors.password && (
+                  <div className="text-xs text-red-500 ml-1">
+                    {errors.password.message}
+                  </div>
+                )}
               </div>
-              <Button type="submit" className="w-full">
+              <Button onClick={handleSubmit(onSubmit)} className="w-full">
                 LogIn
               </Button>
             </form>

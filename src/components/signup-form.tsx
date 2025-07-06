@@ -29,7 +29,7 @@ const signUpSchema = z
     message: "must match with password",
   });
 
-type TFormData = z.infer<typeof signUpSchema>;
+type TSignUpData = z.infer<typeof signUpSchema>;
 
 const SignupForm = ({ className, ...props }: React.ComponentProps<"div">) => {
   const router = useRouter();
@@ -37,13 +37,30 @@ const SignupForm = ({ className, ...props }: React.ComponentProps<"div">) => {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<TFormData>({
+  } = useForm<TSignUpData>({
     resolver: zodResolver(signUpSchema),
     mode: "onBlur",
   });
 
-  const onSubmit = async (data: TFormData) => {
+  const onSubmit = async (data: TSignUpData) => {
     console.log("signUp refined data:", data);
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      console.log("signUp failed", result);
+      return;
+    }
+    // Optionally redirect to login or auto-login
+    router.push("/login");
   };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
